@@ -1,6 +1,6 @@
 {
   "name": "@brain-agriculture/api",
-  "version": "0.1.0",
+  "version": "0.1.1-dev.0",
   "private": true,
   "type": "commonjs",
   "scripts": {
@@ -9,9 +9,9 @@
     "start": "node dist/main.js",
     "test": "jest",
     "lint": "eslint \"src/**/*.ts\"",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "seed": "tsx prisma/seed.ts"
+    "prisma:generate": "node ../../scripts/with-root-env.cjs prisma generate",
+    "prisma:migrate": "node ../../scripts/with-root-env.cjs prisma migrate dev",
+    "seed": "node ../../scripts/with-root-env.cjs tsx prisma/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",

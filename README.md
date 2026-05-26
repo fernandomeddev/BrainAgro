@@ -65,6 +65,39 @@ URLs locais:
 - API: `http://localhost:3333`
 - Web: `http://localhost:5173`
 
+## Versionamento
+
+O projeto usa versionamento SemVer no formato `MAJOR.MINOR.PATCH`, mantendo a mesma versao no pacote raiz, na API, no frontend e no `package-lock.json`.
+
+Regras:
+
+- `dev`: incrementa o proximo patch como prerelease de desenvolvimento. Exemplo: `0.1.0` -> `0.1.1-dev.0`.
+- `fix`: incrementa patch para correcoes. Exemplo: `0.1.0` -> `0.1.1`.
+- `feature`: incrementa minor para novas funcionalidades. Exemplo: `0.1.0` -> `0.2.0`.
+- `release`: incrementa major para releases maiores ou mudancas incompativeis. Exemplo: `0.1.0` -> `1.0.0`.
+
+Comandos:
+
+```bash
+npm run version:dev
+npm run version:fix
+npm run version:feature
+npm run version:release
+```
+
+Para simular sem alterar arquivos:
+
+```bash
+npm run version -- dev --dry-run
+```
+
+Fluxo recomendado:
+
+1. Antes de commits de desenvolvimento, use `npm run version:dev`.
+2. Ao fechar uma correcao, use `npm run version:fix`.
+3. Ao entregar uma funcionalidade, use `npm run version:feature`.
+4. Ao preparar uma release maior, use `npm run version:release`.
+
 ## Stack sugerida
 
 Backend:

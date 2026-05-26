@@ -8,7 +8,7 @@ import { ProducersModule } from './producers/producers.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({ envFilePath: ['.env', '../../.env'], isGlobal: true }),
     PrismaModule,
     ProducersModule,
     FarmsModule,

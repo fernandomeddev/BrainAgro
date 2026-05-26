@@ -1,6 +1,6 @@
 {
   "name": "brain-agriculture",
-  "version": "0.1.0",
+  "version": "0.1.1-dev.0",
   "private": true,
   "workspaces": [
     "apps/api",
@@ -13,7 +13,12 @@
     "lint": "npm run lint --workspaces",
     "prisma:generate": "npm run prisma:generate --workspace @brain-agriculture/api",
     "prisma:migrate": "npm run prisma:migrate --workspace @brain-agriculture/api",
-    "seed": "npm run seed --workspace @brain-agriculture/api"
+    "seed": "npm run seed --workspace @brain-agriculture/api",
+    "version": "node scripts/bump-version.cjs",
+    "version:dev": "node scripts/bump-version.cjs dev",
+    "version:fix": "node scripts/bump-version.cjs fix",
+    "version:feature": "node scripts/bump-version.cjs feature",
+    "version:release": "node scripts/bump-version.cjs release"
   },
   "engines": {
     "node": ">=20"

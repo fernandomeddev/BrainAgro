@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { apiGet, apiPost } from '../api/client';
+import { apiDelete, apiGet, apiPost } from '../api/client';
 import { PaginatedProducers, Producer } from '../types';
 
 export type CreateProducerPayload = {
@@ -38,6 +38,11 @@ export const createProducer = createAsyncThunk('producers/create', (payload: Cre
   apiPost<Producer, CreateProducerPayload>('/producers', payload)
 );
 
+export const deleteProducer = createAsyncThunk('producers/delete', async (producerId: string) => {
+  await apiDelete(`/producers/${producerId}`);
+  return producerId;
+});
+
 const producersSlice = createSlice({
   name: 'producers',
   initialState,
@@ -46,19 +51,39 @@ const producersSlice = createSlice({
     builder
       .addCase(fetchProducers.pending, (state) => {
         state.status = 'loading';
+        state.error = null;
       })
       .addCase(fetchProducers.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.items = action.payload.items;
         state.total = action.payload.total;
+        state.error = null;
       })
       .addCase(fetchProducers.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message ?? 'Erro ao carregar produtores.';
       })
+      .addCase(createProducer.pending, (state) => {
+        state.error = null;
+      })
       .addCase(createProducer.fulfilled, (state, action) => {
         state.items.unshift(action.payload);
         state.total += 1;
+        state.error = null;
+      })
+      .addCase(createProducer.rejected, (state, action) => {
+        state.error = action.error.message ?? 'Erro ao cadastrar produtor.';
+      })
+      .addCase(deleteProducer.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(deleteProducer.fulfilled, (state, action) => {
+        state.items = state.items.filter((producer) => producer.id !== action.payload);
+        state.total = Math.max(0, state.total - 1);
+        state.error = null;
+      })
+      .addCase(deleteProducer.rejected, (state, action) => {
+        state.error = action.error.message ?? 'Erro ao excluir produtor.';
       });
   }
 });

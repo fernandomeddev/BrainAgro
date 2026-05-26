@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BarChart3, Factory, Leaf, MapPinned, Plus, RefreshCw, Sprout } from 'lucide-react';
+import { BarChart3, Factory, Leaf, MapPinned, Plus, RefreshCw, Sprout, Trash2 } from 'lucide-react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import styled from 'styled-components';
 import { fetchDashboard } from './store/dashboardSlice';
 import { useAppDispatch, useAppSelector } from './store/hooks';
-import { CreateProducerPayload, createProducer, fetchProducers } from './store/producersSlice';
+import { CreateProducerPayload, createProducer, deleteProducer, fetchProducers } from './store/producersSlice';
 
 const COLORS = ['#2f7d59', '#d89c34', '#3d6f9f', '#b85c38', '#67706b'];
 
@@ -13,7 +13,9 @@ export function App() {
   const dashboard = useAppSelector((state) => state.dashboard.data);
   const dashboardStatus = useAppSelector((state) => state.dashboard.status);
   const producers = useAppSelector((state) => state.producers.items);
+  const producersError = useAppSelector((state) => state.producers.error);
   const [isSubmitting, setSubmitting] = useState(false);
+  const [deletingProducerId, setDeletingProducerId] = useState<string | null>(null);
 
   useEffect(() => {
     void dispatch(fetchDashboard());
@@ -57,10 +59,24 @@ export function App() {
       ]
     };
 
-    await dispatch(createProducer(payload));
-    await Promise.all([dispatch(fetchDashboard()), dispatch(fetchProducers())]);
-    event.currentTarget.reset();
-    setSubmitting(false);
+    try {
+      await dispatch(createProducer(payload)).unwrap();
+      await Promise.all([dispatch(fetchDashboard()), dispatch(fetchProducers())]);
+      event.currentTarget.reset();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete(producerId: string) {
+    setDeletingProducerId(producerId);
+
+    try {
+      await dispatch(deleteProducer(producerId)).unwrap();
+      await dispatch(fetchDashboard());
+    } finally {
+      setDeletingProducerId(null);
+    }
   }
 
   return (
@@ -97,6 +113,8 @@ export function App() {
             <RefreshCw size={18} />
           </IconButton>
         </Topbar>
+
+        {producersError ? <Alert role="alert">{normalizeApiError(producersError)}</Alert> : null}
 
         <Metrics>
           <Metric>
@@ -199,6 +217,7 @@ export function App() {
                 <th>Documento</th>
                 <th>Fazendas</th>
                 <th>Area total</th>
+                <th aria-label="Acoes" />
               </tr>
             </thead>
             <tbody>
@@ -213,6 +232,18 @@ export function App() {
                       .toLocaleString('pt-BR')}
                     ha
                   </td>
+                  <td>
+                    <IconButton
+                      type="button"
+                      title="Excluir produtor"
+                      disabled={deletingProducerId === producer.id}
+                      onClick={() => {
+                        void handleDelete(producer.id);
+                      }}
+                    >
+                      <Trash2 size={16} />
+                    </IconButton>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -221,6 +252,13 @@ export function App() {
       </Main>
     </Shell>
   );
+}
+
+function normalizeApiError(error: string) {
+  if (error.includes('DOCUMENT_ALREADY_EXISTS')) return 'Ja existe um produtor cadastrado com este documento.';
+  if (error.includes('INVALID_DOCUMENT')) return 'Informe um CPF ou CNPJ valido.';
+  if (error.includes('INVALID_FARM_AREA')) return 'A soma das areas agricultavel e vegetacao nao pode ultrapassar a area total.';
+  return 'Nao foi possivel concluir a operacao. Verifique os dados e tente novamente.';
 }
 
 const Shell = styled.div`
@@ -300,6 +338,20 @@ const IconButton = styled.button`
   background: #ffffff;
   color: #173f2f;
   cursor: pointer;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
+`;
+
+const Alert = styled.div`
+  margin-bottom: 18px;
+  border: 1px solid #e3b7a7;
+  border-radius: 6px;
+  padding: 12px 14px;
+  color: #74351f;
+  background: #fff4ef;
 `;
 
 const Metrics = styled.section`
@@ -464,5 +516,11 @@ const Table = styled.table`
     color: #617068;
     font-size: 0.78rem;
     text-transform: uppercase;
+  }
+
+  th:last-child,
+  td:last-child {
+    width: 56px;
+    text-align: right;
   }
 `;

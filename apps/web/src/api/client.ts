@@ -16,3 +16,8 @@ export async function apiPost<TResponse, TBody>(path: string, body: TBody): Prom
   if (!response.ok) throw new Error(await response.text());
   return response.json() as Promise<TResponse>;
 }
+
+export async function apiDelete(path: string): Promise<void> {
+  const response = await fetch(`${API_URL}${path}`, { method: 'DELETE' });
+  if (!response.ok) throw new Error(await response.text());
+}
