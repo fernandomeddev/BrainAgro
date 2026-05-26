@@ -1,0 +1,579 @@
+openapi: 3.0.3
+info:
+  title: Brain Agriculture API
+  version: 1.0.0
+  description: API REST para gerenciamento de produtores rurais, propriedades, safras, culturas e dashboard.
+servers:
+  - url: http://localhost:3000
+    description: Local
+tags:
+  - name: Producers
+  - name: Farms
+  - name: HarvestCrops
+  - name: Dashboard
+paths:
+  /producers:
+    post:
+      tags: [Producers]
+      summary: Cadastra um produtor rural
+      operationId: createProducer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProducerRequest'
+      responses:
+        '201':
+          description: Produtor criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      tags: [Producers]
+      summary: Lista produtores rurais
+      operationId: listProducers
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista paginada de produtores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProducers'
+  /producers/{producerId}:
+    get:
+      tags: [Producers]
+      summary: Busca um produtor por ID
+      operationId: getProducer
+      parameters:
+        - $ref: '#/components/parameters/ProducerId'
+      responses:
+        '200':
+          description: Produtor encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producer'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Producers]
+      summary: Atualiza um produtor
+      operationId: updateProducer
+      parameters:
+        - $ref: '#/components/parameters/ProducerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProducerRequest'
+      responses:
+        '200':
+          description: Produtor atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags: [Producers]
+      summary: Remove um produtor
+      operationId: deleteProducer
+      parameters:
+        - $ref: '#/components/parameters/ProducerId'
+      responses:
+        '204':
+          description: Produtor removido
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /producers/{producerId}/farms:
+    post:
+      tags: [Farms]
+      summary: Cadastra uma propriedade para o produtor
+      operationId: createFarm
+      parameters:
+        - $ref: '#/components/parameters/ProducerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFarmRequest'
+      responses:
+        '201':
+          description: Propriedade criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Farm'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    get:
+      tags: [Farms]
+      summary: Lista propriedades de um produtor
+      operationId: listProducerFarms
+      parameters:
+        - $ref: '#/components/parameters/ProducerId'
+      responses:
+        '200':
+          description: Propriedades do produtor
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Farm'
+  /farms/{farmId}:
+    get:
+      tags: [Farms]
+      summary: Busca uma propriedade por ID
+      operationId: getFarm
+      parameters:
+        - $ref: '#/components/parameters/FarmId'
+      responses:
+        '200':
+          description: Propriedade encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Farm'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Farms]
+      summary: Atualiza uma propriedade
+      operationId: updateFarm
+      parameters:
+        - $ref: '#/components/parameters/FarmId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFarmRequest'
+      responses:
+        '200':
+          description: Propriedade atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Farm'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Farms]
+      summary: Remove uma propriedade
+      operationId: deleteFarm
+      parameters:
+        - $ref: '#/components/parameters/FarmId'
+      responses:
+        '204':
+          description: Propriedade removida
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /farms/{farmId}/harvest-crops:
+    post:
+      tags: [HarvestCrops]
+      summary: Registra uma cultura por safra em uma propriedade
+      operationId: createHarvestCrop
+      parameters:
+        - $ref: '#/components/parameters/FarmId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateHarvestCropRequest'
+      responses:
+        '201':
+          description: Cultura registrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarvestCrop'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      tags: [HarvestCrops]
+      summary: Lista culturas por safra de uma propriedade
+      operationId: listFarmHarvestCrops
+      parameters:
+        - $ref: '#/components/parameters/FarmId'
+      responses:
+        '200':
+          description: Culturas por safra da propriedade
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HarvestCrop'
+  /harvest-crops/{harvestCropId}:
+    put:
+      tags: [HarvestCrops]
+      summary: Atualiza uma cultura por safra
+      operationId: updateHarvestCrop
+      parameters:
+        - $ref: '#/components/parameters/HarvestCropId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateHarvestCropRequest'
+      responses:
+        '200':
+          description: Cultura por safra atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HarvestCrop'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      tags: [HarvestCrops]
+      summary: Remove uma cultura por safra
+      operationId: deleteHarvestCrop
+      parameters:
+        - $ref: '#/components/parameters/HarvestCropId'
+      responses:
+        '204':
+          description: Cultura por safra removida
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /dashboard:
+    get:
+      tags: [Dashboard]
+      summary: Retorna indicadores consolidados
+      operationId: getDashboard
+      responses:
+        '200':
+          description: Indicadores consolidados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+components:
+  parameters:
+    Page:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: pageSize
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    ProducerId:
+      name: producerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    FarmId:
+      name: farmId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    HarvestCropId:
+      name: harvestCropId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    BadRequest:
+      description: Requisicao invalida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Recurso nao encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Conflito de regra de negocio
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    CreateProducerRequest:
+      type: object
+      required: [document, name]
+      properties:
+        document:
+          type: string
+          example: '12345678909'
+        name:
+          type: string
+          minLength: 2
+          example: Maria Silva
+        farms:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateFarmRequest'
+    UpdateProducerRequest:
+      type: object
+      required: [document, name]
+      properties:
+        document:
+          type: string
+          example: '11222333000181'
+        name:
+          type: string
+          minLength: 2
+          example: Agro Silva LTDA
+    Producer:
+      type: object
+      required: [id, document, documentType, name, farms, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        document:
+          type: string
+          example: '12345678909'
+        documentType:
+          type: string
+          enum: [CPF, CNPJ]
+        name:
+          type: string
+        farms:
+          type: array
+          items:
+            $ref: '#/components/schemas/Farm'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateFarmRequest:
+      type: object
+      required: [name, city, state, totalArea, arableArea, vegetationArea]
+      properties:
+        name:
+          type: string
+          example: Fazenda Boa Esperanca
+        city:
+          type: string
+          example: Sorriso
+        state:
+          type: string
+          minLength: 2
+          maxLength: 2
+          example: MT
+        totalArea:
+          type: number
+          format: double
+          minimum: 0.01
+          example: 1000
+        arableArea:
+          type: number
+          format: double
+          minimum: 0
+          example: 700
+        vegetationArea:
+          type: number
+          format: double
+          minimum: 0
+          example: 300
+        harvestCrops:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateHarvestCropRequest'
+    UpdateFarmRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreateFarmRequest'
+    Farm:
+      type: object
+      required: [id, producerId, name, city, state, totalArea, arableArea, vegetationArea, harvestCrops, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        producerId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        totalArea:
+          type: number
+          format: double
+        arableArea:
+          type: number
+          format: double
+        vegetationArea:
+          type: number
+          format: double
+        harvestCrops:
+          type: array
+          items:
+            $ref: '#/components/schemas/HarvestCrop'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateHarvestCropRequest:
+      type: object
+      required: [harvest, crop]
+      properties:
+        harvest:
+          type: string
+          example: Safra 2021
+        crop:
+          type: string
+          example: Soja
+    UpdateHarvestCropRequest:
+      allOf:
+        - $ref: '#/components/schemas/CreateHarvestCropRequest'
+    HarvestCrop:
+      type: object
+      required: [id, farmId, harvest, crop, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        farmId:
+          type: string
+          format: uuid
+        harvest:
+          type: string
+        crop:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Dashboard:
+      type: object
+      required: [totalFarms, totalArea, byState, byCrop, byLandUse]
+      properties:
+        totalFarms:
+          type: integer
+          example: 12
+        totalArea:
+          type: number
+          format: double
+          example: 2400.5
+        byState:
+          type: array
+          items:
+            type: object
+            required: [state, total]
+            properties:
+              state:
+                type: string
+                example: MT
+              total:
+                type: integer
+                example: 5
+        byCrop:
+          type: array
+          items:
+            type: object
+            required: [crop, total]
+            properties:
+              crop:
+                type: string
+                example: Soja
+              total:
+                type: integer
+                example: 7
+        byLandUse:
+          type: object
+          required: [arableArea, vegetationArea]
+          properties:
+            arableArea:
+              type: number
+              format: double
+              example: 1800.25
+            vegetationArea:
+              type: number
+              format: double
+              example: 600.25
+    PaginatedProducers:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Producer'
+        page:
+          type: integer
+          example: 1
+        pageSize:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 42
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: INVALID_DOCUMENT
+        message:
+          type: string
+          example: CPF ou CNPJ invalido.
+        details:
+          type: object
+          additionalProperties: true

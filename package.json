@@ -1,0 +1,21 @@
+{
+  "name": "brain-agriculture",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @brain-agriculture/api & npm run dev --workspace @brain-agriculture/web",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "prisma:generate": "npm run prisma:generate --workspace @brain-agriculture/api",
+    "prisma:migrate": "npm run prisma:migrate --workspace @brain-agriculture/api",
+    "seed": "npm run seed --workspace @brain-agriculture/api"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
