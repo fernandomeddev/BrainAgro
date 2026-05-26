@@ -4,7 +4,15 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import styled from 'styled-components';
 import { fetchDashboard } from './store/dashboardSlice';
 import { useAppDispatch, useAppSelector } from './store/hooks';
-import { CreateProducerPayload, createProducer, deleteProducer, fetchProducers, updateProducer } from './store/producersSlice';
+import {
+  CreateFarmPayload,
+  CreateProducerPayload,
+  createFarm,
+  createProducer,
+  deleteProducer,
+  fetchProducers,
+  updateProducer
+} from './store/producersSlice';
 
 const COLORS = ['#2f7d59', '#d89c34', '#3d6f9f', '#b85c38', '#67706b'];
 type ProducerDraft = { id: string; name: string; document: string };
@@ -16,6 +24,7 @@ export function App() {
   const producers = useAppSelector((state) => state.producers.items);
   const producersError = useAppSelector((state) => state.producers.error);
   const [isSubmitting, setSubmitting] = useState(false);
+  const [isFarmSubmitting, setFarmSubmitting] = useState(false);
   const [deletingProducerId, setDeletingProducerId] = useState<string | null>(null);
   const [savingProducerId, setSavingProducerId] = useState<string | null>(null);
   const [producerDraft, setProducerDraft] = useState<ProducerDraft | null>(null);
@@ -79,6 +88,38 @@ export function App() {
       await dispatch(fetchDashboard());
     } finally {
       setDeletingProducerId(null);
+    }
+  }
+
+  async function handleFarmSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFarmSubmitting(true);
+
+    const form = new FormData(event.currentTarget);
+    const payload: CreateFarmPayload = {
+      producerId: String(form.get('producerId')),
+      farm: {
+        name: String(form.get('farmName')),
+        city: String(form.get('city')),
+        state: String(form.get('state')),
+        totalArea: Number(form.get('totalArea')),
+        arableArea: Number(form.get('arableArea')),
+        vegetationArea: Number(form.get('vegetationArea')),
+        harvestCrops: [
+          {
+            harvest: String(form.get('harvest')),
+            crop: String(form.get('crop'))
+          }
+        ].filter((item) => item.harvest && item.crop)
+      }
+    };
+
+    try {
+      await dispatch(createFarm(payload)).unwrap();
+      await Promise.all([dispatch(fetchDashboard()), dispatch(fetchProducers())]);
+      event.currentTarget.reset();
+    } finally {
+      setFarmSubmitting(false);
     }
   }
 
@@ -219,6 +260,36 @@ export function App() {
               <Input name="crop" placeholder="Cultura" />
             </Fields>
           </FormPanel>
+
+          <FormPanel onSubmit={handleFarmSubmit}>
+            <PanelHeader>
+              <h2>Nova fazenda</h2>
+              <SubmitButton disabled={isFarmSubmitting || producers.length === 0}>
+                <Plus size={16} />
+                Salvar
+              </SubmitButton>
+            </PanelHeader>
+            <Fields>
+              <Select name="producerId" required defaultValue="">
+                <option value="" disabled>
+                  Produtor
+                </option>
+                {producers.map((producer) => (
+                  <option key={producer.id} value={producer.id}>
+                    {producer.name}
+                  </option>
+                ))}
+              </Select>
+              <Input name="farmName" placeholder="Nome da fazenda" required />
+              <Input name="city" placeholder="Cidade" required />
+              <Input name="state" placeholder="UF" maxLength={2} required />
+              <Input name="totalArea" type="number" step="0.01" placeholder="Area total" required />
+              <Input name="arableArea" type="number" step="0.01" placeholder="Area agricultavel" required />
+              <Input name="vegetationArea" type="number" step="0.01" placeholder="Area vegetacao" required />
+              <Input name="harvest" placeholder="Safra" />
+              <Input name="crop" placeholder="Cultura" />
+            </Fields>
+          </FormPanel>
         </Grid>
 
         <Panel>
@@ -328,6 +399,8 @@ function normalizeApiError(error: string) {
   if (error.includes('DOCUMENT_ALREADY_EXISTS')) return 'Ja existe um produtor cadastrado com este documento.';
   if (error.includes('INVALID_DOCUMENT')) return 'Informe um CPF ou CNPJ valido.';
   if (error.includes('INVALID_FARM_AREA')) return 'A soma das areas agricultavel e vegetacao nao pode ultrapassar a area total.';
+  if (error.includes('PRODUCER_NOT_FOUND')) return 'Produtor nao encontrado.';
+  if (error.includes('FARM_NOT_FOUND')) return 'Fazenda nao encontrada.';
   return 'Nao foi possivel concluir a operacao. Verifique os dados e tente novamente.';
 }
 
@@ -562,6 +635,16 @@ const Fields = styled.div`
 `;
 
 const Input = styled.input`
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #cfd8ce;
+  border-radius: 6px;
+  padding: 0 10px;
+  color: #17211d;
+  background: #ffffff;
+`;
+
+const Select = styled.select`
   width: 100%;
   min-height: 40px;
   border: 1px solid #cfd8ce;
