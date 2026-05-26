@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { apiDelete, apiGet, apiPost, apiPut } from '../api/client';
-import { PaginatedProducers, Producer } from '../types';
+import { Farm, PaginatedProducers, Producer } from '../types';
 
 export type CreateProducerPayload = {
   document: string;
@@ -20,6 +20,19 @@ export type UpdateProducerPayload = {
   id: string;
   document: string;
   name: string;
+};
+
+export type CreateFarmPayload = {
+  producerId: string;
+  farm: {
+    name: string;
+    city: string;
+    state: string;
+    totalArea: number;
+    arableArea: number;
+    vegetationArea: number;
+    harvestCrops?: Array<{ harvest: string; crop: string }>;
+  };
 };
 
 type ProducersState = {
@@ -47,6 +60,11 @@ export const createProducer = createAsyncThunk('producers/create', (payload: Cre
 export const updateProducer = createAsyncThunk('producers/update', ({ id, ...payload }: UpdateProducerPayload) =>
   apiPut<Producer, Omit<UpdateProducerPayload, 'id'>>(`/producers/${id}`, payload)
 );
+
+export const createFarm = createAsyncThunk('producers/createFarm', async ({ producerId, farm }: CreateFarmPayload) => {
+  const createdFarm = await apiPost<Farm, CreateFarmPayload['farm']>(`/producers/${producerId}/farms`, farm);
+  return { producerId, farm: createdFarm };
+});
 
 export const deleteProducer = createAsyncThunk('producers/delete', async (producerId: string) => {
   await apiDelete(`/producers/${producerId}`);
@@ -96,6 +114,19 @@ const producersSlice = createSlice({
       })
       .addCase(updateProducer.rejected, (state, action) => {
         state.error = action.error.message ?? 'Erro ao atualizar produtor.';
+      })
+      .addCase(createFarm.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(createFarm.fulfilled, (state, action) => {
+        const producer = state.items.find((item) => item.id === action.payload.producerId);
+        if (producer) {
+          producer.farms.unshift(action.payload.farm);
+        }
+        state.error = null;
+      })
+      .addCase(createFarm.rejected, (state, action) => {
+        state.error = action.error.message ?? 'Erro ao cadastrar fazenda.';
       })
       .addCase(deleteProducer.pending, (state) => {
         state.error = null;
