@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { apiDelete, apiGet, apiPost } from '../api/client';
+import { apiDelete, apiGet, apiPost, apiPut } from '../api/client';
 import { PaginatedProducers, Producer } from '../types';
 
 export type CreateProducerPayload = {
@@ -14,6 +14,12 @@ export type CreateProducerPayload = {
     vegetationArea: number;
     harvestCrops?: Array<{ harvest: string; crop: string }>;
   }>;
+};
+
+export type UpdateProducerPayload = {
+  id: string;
+  document: string;
+  name: string;
 };
 
 type ProducersState = {
@@ -36,6 +42,10 @@ export const fetchProducers = createAsyncThunk('producers/fetch', () =>
 
 export const createProducer = createAsyncThunk('producers/create', (payload: CreateProducerPayload) =>
   apiPost<Producer, CreateProducerPayload>('/producers', payload)
+);
+
+export const updateProducer = createAsyncThunk('producers/update', ({ id, ...payload }: UpdateProducerPayload) =>
+  apiPut<Producer, Omit<UpdateProducerPayload, 'id'>>(`/producers/${id}`, payload)
 );
 
 export const deleteProducer = createAsyncThunk('producers/delete', async (producerId: string) => {
@@ -73,6 +83,19 @@ const producersSlice = createSlice({
       })
       .addCase(createProducer.rejected, (state, action) => {
         state.error = action.error.message ?? 'Erro ao cadastrar produtor.';
+      })
+      .addCase(updateProducer.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(updateProducer.fulfilled, (state, action) => {
+        const index = state.items.findIndex((producer) => producer.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+        state.error = null;
+      })
+      .addCase(updateProducer.rejected, (state, action) => {
+        state.error = action.error.message ?? 'Erro ao atualizar produtor.';
       })
       .addCase(deleteProducer.pending, (state) => {
         state.error = null;

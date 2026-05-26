@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BarChart3, Factory, Leaf, MapPinned, Plus, RefreshCw, Sprout, Trash2 } from 'lucide-react';
+import { BarChart3, Check, Edit3, Factory, Leaf, MapPinned, Plus, RefreshCw, Sprout, Trash2, X } from 'lucide-react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import styled from 'styled-components';
 import { fetchDashboard } from './store/dashboardSlice';
 import { useAppDispatch, useAppSelector } from './store/hooks';
-import { CreateProducerPayload, createProducer, deleteProducer, fetchProducers } from './store/producersSlice';
+import { CreateProducerPayload, createProducer, deleteProducer, fetchProducers, updateProducer } from './store/producersSlice';
 
 const COLORS = ['#2f7d59', '#d89c34', '#3d6f9f', '#b85c38', '#67706b'];
+type ProducerDraft = { id: string; name: string; document: string };
 
 export function App() {
   const dispatch = useAppDispatch();
@@ -16,6 +17,8 @@ export function App() {
   const producersError = useAppSelector((state) => state.producers.error);
   const [isSubmitting, setSubmitting] = useState(false);
   const [deletingProducerId, setDeletingProducerId] = useState<string | null>(null);
+  const [savingProducerId, setSavingProducerId] = useState<string | null>(null);
+  const [producerDraft, setProducerDraft] = useState<ProducerDraft | null>(null);
 
   useEffect(() => {
     void dispatch(fetchDashboard());
@@ -76,6 +79,18 @@ export function App() {
       await dispatch(fetchDashboard());
     } finally {
       setDeletingProducerId(null);
+    }
+  }
+
+  async function handleUpdate() {
+    if (!producerDraft) return;
+    setSavingProducerId(producerDraft.id);
+
+    try {
+      await dispatch(updateProducer(producerDraft)).unwrap();
+      setProducerDraft(null);
+    } finally {
+      setSavingProducerId(null);
     }
   }
 
@@ -221,31 +236,86 @@ export function App() {
               </tr>
             </thead>
             <tbody>
-              {producers.map((producer) => (
-                <tr key={producer.id}>
-                  <td>{producer.name}</td>
-                  <td>{producer.documentType} {producer.document}</td>
-                  <td>{producer.farms.length}</td>
-                  <td>
-                    {producer.farms
-                      .reduce((sum, farm) => sum + Number(farm.totalArea), 0)
-                      .toLocaleString('pt-BR')}
-                    ha
-                  </td>
-                  <td>
-                    <IconButton
-                      type="button"
-                      title="Excluir produtor"
-                      disabled={deletingProducerId === producer.id}
-                      onClick={() => {
-                        void handleDelete(producer.id);
-                      }}
-                    >
-                      <Trash2 size={16} />
-                    </IconButton>
-                  </td>
-                </tr>
-              ))}
+              {producers.map((producer) => {
+                const isEditing = producerDraft?.id === producer.id;
+                const isSaving = savingProducerId === producer.id;
+
+                return (
+                  <tr key={producer.id}>
+                    <td>
+                      {isEditing ? (
+                        <InlineInput
+                          value={producerDraft.name}
+                          onChange={(event) => setProducerDraft({ ...producerDraft, name: event.target.value })}
+                          aria-label="Nome do produtor"
+                        />
+                      ) : (
+                        producer.name
+                      )}
+                    </td>
+                    <td>
+                      {isEditing ? (
+                        <InlineInput
+                          value={producerDraft.document}
+                          onChange={(event) => setProducerDraft({ ...producerDraft, document: event.target.value })}
+                          aria-label="Documento do produtor"
+                        />
+                      ) : (
+                        <>
+                          {producer.documentType} {producer.document}
+                        </>
+                      )}
+                    </td>
+                    <td>{producer.farms.length}</td>
+                    <td>
+                      {producer.farms
+                        .reduce((sum, farm) => sum + Number(farm.totalArea), 0)
+                        .toLocaleString('pt-BR')}
+                      ha
+                    </td>
+                    <td>
+                      <Actions>
+                        {isEditing ? (
+                          <>
+                            <IconButton type="button" title="Salvar alteracoes" disabled={isSaving} onClick={() => void handleUpdate()}>
+                              <Check size={16} />
+                            </IconButton>
+                            <IconButton type="button" title="Cancelar edicao" disabled={isSaving} onClick={() => setProducerDraft(null)}>
+                              <X size={16} />
+                            </IconButton>
+                          </>
+                        ) : (
+                          <>
+                            <IconButton
+                              type="button"
+                              title="Editar produtor"
+                              onClick={() =>
+                                setProducerDraft({
+                                  id: producer.id,
+                                  name: producer.name,
+                                  document: producer.document
+                                })
+                              }
+                            >
+                              <Edit3 size={16} />
+                            </IconButton>
+                            <IconButton
+                              type="button"
+                              title="Excluir produtor"
+                              disabled={deletingProducerId === producer.id}
+                              onClick={() => {
+                                void handleDelete(producer.id);
+                              }}
+                            >
+                              <Trash2 size={16} />
+                            </IconButton>
+                          </>
+                        )}
+                      </Actions>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </Table>
         </Panel>
@@ -501,6 +571,17 @@ const Input = styled.input`
   background: #ffffff;
 `;
 
+const InlineInput = styled(Input)`
+  min-width: 180px;
+  min-height: 36px;
+`;
+
+const Actions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+`;
+
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
@@ -520,7 +601,7 @@ const Table = styled.table`
 
   th:last-child,
   td:last-child {
-    width: 56px;
+    width: 104px;
     text-align: right;
   }
 `;
