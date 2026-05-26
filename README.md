@@ -1,6 +1,6 @@
-# Brain Agriculture - Teste Tecnico v2
+# Brain Agriculture
 
-Especificacao para uma aplicacao fullstack de gerenciamento de produtores rurais, propriedades, safras e culturas plantadas.
+Especificacao para uma aplicacao de gerenciamento de produtores rurais, propriedades, safras e culturas plantadas.
 
 ## Objetivo
 
