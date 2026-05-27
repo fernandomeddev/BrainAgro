@@ -37,7 +37,7 @@ cp .env.example .env
 3. Suba o PostgreSQL:
 
 ```bash
-docker compose up -d
+npm run docker:db
 ```
 
 4. Gere o client Prisma e rode as migrations:
@@ -64,6 +64,24 @@ URLs locais:
 
 - API: `http://localhost:3333`
 - Web: `http://localhost:5173`
+
+Se a porta `3333` estiver em uso apos executar a pilha Docker completa, pare os containers de aplicacao e mantenha somente o banco:
+
+```bash
+npm run docker:stop-app
+npm run docker:db
+```
+
+Para executar a pilha em containers:
+
+```bash
+npm run docker:app
+```
+
+URLs em Docker:
+
+- API: `http://localhost:3333`
+- Web: `http://localhost:4173`
 
 ## Versionamento
 
