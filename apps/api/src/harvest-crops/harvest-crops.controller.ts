@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { mapDomainError } from '../common/errors';
 import { CreateHarvestCropDto, UpdateHarvestCropDto } from './dto/harvest-crop.dto';
 import { HarvestCropsService } from './harvest-crops.service';
@@ -11,6 +11,15 @@ export class HarvestCropsController {
   async create(@Param('farmId') farmId: string, @Body() dto: CreateHarvestCropDto) {
     try {
       return await this.harvestCropsService.create(farmId, dto);
+    } catch (error) {
+      mapDomainError(error);
+    }
+  }
+
+  @Get('farms/:farmId/harvest-crops')
+  async listByFarm(@Param('farmId') farmId: string) {
+    try {
+      return await this.harvestCropsService.listByFarm(farmId);
     } catch (error) {
       mapDomainError(error);
     }
