@@ -1,26 +1,48 @@
 # Brain Agriculture
 
-Especificacao para uma aplicacao de gerenciamento de produtores rurais, propriedades, safras e culturas plantadas.
+Aplicacao fullstack para gerenciamento de produtores rurais, fazendas, safras, culturas plantadas e indicadores operacionais.
 
-## Objetivo
+## Escopo Entregue
 
-Construir uma solucao limpa, testavel, documentada e escalavel para cadastrar produtores rurais e apresentar indicadores consolidados em dashboard.
-
-## Escopo
-
-- Cadastro, edicao, listagem e exclusao de produtores rurais.
-- Validacao de CPF ou CNPJ.
-- Associacao de um produtor a zero, uma ou varias propriedades rurais.
-- Cadastro de safras e culturas plantadas por propriedade.
-- Validacao de areas da propriedade.
-- Dashboard com totais e graficos por estado, cultura e uso do solo.
+- CRUD de produtores rurais com validacao de CPF/CNPJ.
+- Cadastro e manutencao de fazendas vinculadas a produtores.
+- Cadastro e manutencao de culturas por fazenda e safra.
+- Validacao de area: `areaAgricultavel + areaVegetacao <= areaTotal`.
+- Dashboard com cards e graficos de pizza por uso do solo, estado e cultura.
+- Filtros funcionais no dashboard por UF e cultura.
+- Frontend dark SaaS, responsivo e refatorado em componentes.
+- Contrato OpenAPI versionado e validavel por script.
+- Docker para PostgreSQL, API e Web.
 
 ## Documentacao
 
 - [Especificacao funcional e tecnica](docs/SPEC.md)
 - [Contrato OpenAPI](docs/openapi.yaml)
+- [Roteiro de decisoes tecnicas](docs/DECISIONS.md)
+- [Diagnostico e pontos de revisao](docs/DIAGNOSTICO.md)
 
-## Como executar
+## Stack
+
+Backend:
+
+- Node.js
+- NestJS
+- TypeScript
+- Prisma
+- PostgreSQL
+- Docker
+
+Frontend:
+
+- React
+- TypeScript
+- Redux Toolkit
+- Styled Components
+- Recharts
+- Lucide Icons
+- Vite
+
+## Como Executar Localmente
 
 1. Instale as dependencias:
 
@@ -34,10 +56,10 @@ npm install
 cp .env.example .env
 ```
 
-3. Suba o PostgreSQL:
+3. Suba somente o PostgreSQL:
 
 ```bash
-docker compose up -d
+npm run docker:db
 ```
 
 4. Gere o client Prisma e rode as migrations:
@@ -53,7 +75,7 @@ npm run prisma:migrate
 npm run seed
 ```
 
-6. Rode backend e frontend em terminais separados:
+6. Rode API e Web em terminais separados:
 
 ```bash
 npm run dev --workspace @brain-agriculture/api
@@ -65,16 +87,103 @@ URLs locais:
 - API: `http://localhost:3333`
 - Web: `http://localhost:5173`
 
+Se a porta `3333` estiver em uso apos executar a pilha Docker completa, pare os containers de aplicacao e mantenha somente o banco:
+
+```bash
+npm run docker:stop-app
+npm run docker:db
+```
+
+## Docker
+
+Para executar a pilha completa em containers:
+
+```bash
+npm run docker:app
+```
+
+URLs em Docker:
+
+- API: `http://localhost:3333`
+- Web: `http://localhost:4173`
+
+## Validacoes
+
+Build completo:
+
+```bash
+npm run build
+```
+
+Testes:
+
+```bash
+npm run test
+```
+
+Validar contrato OpenAPI:
+
+```bash
+npm run openapi:validate
+```
+
+O script valida:
+
+- sintaxe YAML;
+- secoes principais (`openapi`, `paths`, `components`);
+- referencias internas `$ref`.
+
+Observacao: o contrato OpenAPI esta valido, mas a API ainda nao publica uma rota visual de Swagger UI/Redoc. Esse ponto esta documentado em [Diagnostico](docs/DIAGNOSTICO.md).
+
+## Frontend
+
+Estrutura principal:
+
+```text
+apps/web/src
+  app-types.ts
+  App.tsx
+  components/
+    AppLayout.tsx
+    modals.tsx
+    ui.tsx
+  screens/
+    DashboardScreen.tsx
+    ProducersScreen.tsx
+    FarmsScreen.tsx
+    CulturesScreen.tsx
+    PlaceholderScreen.tsx
+  store/
+  styles/
+  utils/
+```
+
+Decisao arquitetural: `App.tsx` fica responsavel por orquestrar estado, dispatches e exibicao das telas. Componentes visuais e telas ficam separados para facilitar manutencao.
+
+## OpenAPI
+
+Arquivo principal:
+
+```text
+docs/openapi.yaml
+```
+
+Resumo atual:
+
+- OpenAPI: `3.0.3`
+- API version: `1.0.0`
+- Paths documentados: produtores, fazendas, culturas e dashboard.
+
 ## Versionamento
 
-O projeto usa versionamento SemVer no formato `MAJOR.MINOR.PATCH`, mantendo a mesma versao no pacote raiz, na API, no frontend e no `package-lock.json`.
+O projeto usa SemVer no formato `MAJOR.MINOR.PATCH`, mantendo a mesma versao no pacote raiz, API, frontend e `package-lock.json`.
 
 Regras:
 
-- `dev`: incrementa o proximo patch como prerelease de desenvolvimento. Exemplo: `0.1.0` -> `0.1.1-dev.0`.
-- `fix`: incrementa patch para correcoes. Exemplo: `0.1.0` -> `0.1.1`.
-- `feature`: incrementa minor para novas funcionalidades. Exemplo: `0.1.0` -> `0.2.0`.
-- `release`: incrementa major para releases maiores ou mudancas incompativeis. Exemplo: `0.1.0` -> `1.0.0`.
+- `dev`: incrementa prerelease de desenvolvimento.
+- `fix`: incrementa patch.
+- `feature`: incrementa minor.
+- `release`: incrementa major.
 
 Comandos:
 
@@ -85,43 +194,15 @@ npm run version:feature
 npm run version:release
 ```
 
-Para simular sem alterar arquivos:
+Simular sem alterar arquivos:
 
 ```bash
 npm run version -- dev --dry-run
 ```
 
-Fluxo recomendado:
+## Pontos Conhecidos
 
-1. Antes de commits de desenvolvimento, use `npm run version:dev`.
-2. Ao fechar uma correcao, use `npm run version:fix`.
-3. Ao entregar uma funcionalidade, use `npm run version:feature`.
-4. Ao preparar uma release maior, use `npm run version:release`.
-
-## Stack sugerida
-
-Backend:
-
-- Node.js com TypeScript.
-- NestJS.
-- PostgreSQL.
-- ORM Prisma ou TypeORM.
-- Docker e Docker Compose.
-- Testes unitarios e integrados.
-
-Frontend:
-
-- React com TypeScript.
-- Redux Toolkit ou Context API.
-- Jest e React Testing Library.
-- Styled Components ou Emotion.
-- Atomic design para componentes.
-
-## Entregaveis esperados
-
-- API REST documentada.
-- Aplicacao frontend integrada ou dados mockados, conforme escopo escolhido.
-- README com instrucoes de execucao.
-- Especificacao OpenAPI.
-- Testes automatizados.
-- Logs estruturados no backend.
+- `npm run lint` ainda depende de criar `eslint.config.js` para ESLint 9.
+- Dashboard filtra em memoria no frontend; para grande volume, recomenda-se filtros no endpoint `/dashboard`.
+- Swagger UI/Redoc ainda nao esta exposto pela API.
+- Relatorios e Configuracoes estao preparados na navegacao, mas sem regra de negocio implementada.

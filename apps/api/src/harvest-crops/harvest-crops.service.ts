@@ -28,8 +28,17 @@ export class HarvestCropsService {
     }
   }
 
+  async listByFarm(farmId: string) {
+    await this.ensureFarmExists(farmId);
+
+    return this.prisma.harvestCrop.findMany({
+      where: { farmId },
+      orderBy: [{ harvest: 'desc' }, { crop: 'asc' }]
+    });
+  }
+
   async update(harvestCropId: string, dto: UpdateHarvestCropDto) {
-    const existing = await this.get(harvestCropId);
+    await this.get(harvestCropId);
 
     try {
       const harvestCrop = await this.prisma.harvestCrop.update({
