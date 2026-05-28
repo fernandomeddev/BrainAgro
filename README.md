@@ -85,6 +85,8 @@ npm run dev --workspace @brain-agriculture/web
 URLs locais:
 
 - API: `http://localhost:3333`
+- Swagger UI: `http://localhost:3333/docs`
+- Swagger JSON: `http://localhost:3333/docs-json`
 - Web: `http://localhost:5173`
 
 Se a porta `3333` estiver em uso apos executar a pilha Docker completa, pare os containers de aplicacao e mantenha somente o banco:
@@ -105,6 +107,7 @@ npm run docker:app
 URLs em Docker:
 
 - API: `http://localhost:3333`
+- Swagger UI: `http://localhost:3333/docs`
 - Web: `http://localhost:4173`
 
 ## Validacoes
@@ -133,7 +136,7 @@ O script valida:
 - secoes principais (`openapi`, `paths`, `components`);
 - referencias internas `$ref`.
 
-Observacao: o contrato OpenAPI esta valido, mas a API ainda nao publica uma rota visual de Swagger UI/Redoc. Esse ponto esta documentado em [Diagnostico](docs/DIAGNOSTICO.md).
+O contrato versionado fica em `docs/openapi.yaml`. A API tambem publica uma documentacao interativa gerada em runtime em `http://localhost:3333/docs`.
 
 ## Frontend
 
@@ -173,6 +176,8 @@ Resumo atual:
 - OpenAPI: `3.0.3`
 - API version: `1.0.0`
 - Paths documentados: produtores, fazendas, culturas e dashboard.
+- Renderizacao interativa: `http://localhost:3333/docs`.
+- JSON gerado em runtime: `http://localhost:3333/docs-json`.
 
 ## Versionamento
 
@@ -204,5 +209,4 @@ npm run version -- dev --dry-run
 
 - `npm run lint` ainda depende de criar `eslint.config.js` para ESLint 9.
 - Dashboard filtra em memoria no frontend; para grande volume, recomenda-se filtros no endpoint `/dashboard`.
-- Swagger UI/Redoc ainda nao esta exposto pela API.
 - Relatorios e Configuracoes estao preparados na navegacao, mas sem regra de negocio implementada.

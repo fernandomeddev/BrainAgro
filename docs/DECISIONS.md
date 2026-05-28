@@ -51,11 +51,13 @@ Motivo: o backend ainda expoe `/dashboard` agregado sem parametros de filtro. Pa
 
 Impacto: cards e graficos refletem filtro por UF e cultura. Futuramente, se houver grande volume de dados, essa logica deve migrar para endpoint dedicado com query params.
 
-## 5. OpenAPI versionado e validavel por script
+## 5. OpenAPI versionado, validavel e publicado em Swagger UI
 
-Decisao: adicionar `npm run openapi:validate`.
+Decisao: adicionar `npm run openapi:validate` e publicar a documentacao interativa em `/docs` com `@nestjs/swagger` e `swagger-ui-express`.
 
-Motivo: validar sintaxe YAML e referencias `$ref` evita contrato quebrado no repositorio. A renderizacao interativa via Swagger UI/Redoc ainda nao esta publicada pela API.
+Motivo: validar sintaxe YAML e referencias `$ref` evita contrato quebrado no repositorio, enquanto `/docs` facilita exploracao manual da API durante desenvolvimento e code review.
+
+Observacao: `docs/openapi.yaml` continua sendo o contrato versionado no repositorio. O endpoint `/docs-json` e gerado em runtime pelo NestJS a partir dos controllers e DTOs.
 
 ## 6. Docker e portas
 

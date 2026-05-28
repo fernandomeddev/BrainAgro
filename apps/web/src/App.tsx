@@ -466,10 +466,7 @@ export function App() {
             deletingFarmId={deletingFarmId}
             onSetFarmDraft={openEditFarmModal}
             onSaveFarm={saveFarmDraft}
-            onDeleteFarm={(farmId) => {
-              const farm = farms.find((item) => item.id === farmId);
-              openDeleteModal({ type: 'farm', id: farmId, name: farm?.name ?? 'esta fazenda' });
-            }}
+            onDeleteFarm={removeFarm}
           />
         ) : null}
 
@@ -481,10 +478,7 @@ export function App() {
             deletingCultureId={deletingCultureId}
             onSetCultureDraft={openEditCultureModal}
             onSaveCulture={saveCultureDraft}
-            onDeleteCulture={(cultureId) => {
-              const culture = cultures.find((item) => item.id === cultureId);
-              openDeleteModal({ type: 'culture', id: cultureId, name: culture ? `${culture.crop} - ${culture.harvest}` : 'esta cultura' });
-            }}
+            onDeleteCulture={removeCulture}
           />
         ) : null}
 

@@ -1,5 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -14,6 +15,20 @@ async function bootstrap() {
       transform: true
     })
   );
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Brain Agriculture API')
+    .setDescription('API REST para gerenciamento de produtores rurais, propriedades, safras, culturas e dashboard.')
+    .setVersion('1.0.0')
+    .addServer(`http://localhost:${process.env.API_PORT ?? 3333}`, 'Local')
+    .build();
+  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('docs', app, swaggerDocument, {
+    jsonDocumentUrl: 'docs-json',
+    swaggerOptions: {
+      persistAuthorization: true
+    }
+  });
 
   const port = Number(process.env.API_PORT ?? 3333);
   await app.listen(port);
