@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Brain Agriculture API
-  version: 0.3.0
+  version: 1.0.0
   description: API REST para gerenciamento de produtores rurais, propriedades, safras, culturas e dashboard.
 servers:
   - url: http://localhost:3333
