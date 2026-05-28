@@ -461,7 +461,6 @@ export function App() {
         {activePage === 'farms' ? (
           <FarmsScreen
             farms={farms}
-            farmDraft={farmDraft}
             savingFarmId={savingFarmId}
             deletingFarmId={deletingFarmId}
             onSetFarmDraft={openEditFarmModal}
@@ -473,7 +472,6 @@ export function App() {
         {activePage === 'cultures' ? (
           <CulturesScreen
             cultures={cultures}
-            cultureDraft={cultureDraft}
             savingCultureId={savingCultureId}
             deletingCultureId={deletingCultureId}
             onSetCultureDraft={openEditCultureModal}
