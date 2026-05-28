@@ -8,7 +8,7 @@ export function CulturesScreen(props: {
   cultureDraft: HarvestCropDraft | null;
   savingCultureId: string | null;
   deletingCultureId: string | null;
-  onSetCultureDraft: (draft: HarvestCropDraft | null) => void;
+  onSetCultureDraft: (draft: HarvestCropDraft) => void;
   onSaveCulture: () => void;
   onDeleteCulture: (id: string) => void;
 }) {

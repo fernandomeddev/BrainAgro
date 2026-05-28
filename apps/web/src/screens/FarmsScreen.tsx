@@ -7,7 +7,7 @@ export function FarmsScreen(props: {
   farmDraft: FarmDraft | null;
   savingFarmId: string | null;
   deletingFarmId: string | null;
-  onSetFarmDraft: (draft: FarmDraft | null) => void;
+  onSetFarmDraft: (draft: FarmDraft) => void;
   onSaveFarm: () => void;
   onDeleteFarm: (id: string) => void;
 }) {
