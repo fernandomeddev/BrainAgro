@@ -21,43 +21,9 @@ export type HarvestCropDraft = { id: string; harvest: string; crop: string };
 export type ProducerFormData = {
   document: string;
   name: string;
-  email: string;
-  phone: string;
-  stateRegistration: string;
-  birthDate: string;
-  zipCode: string;
-  address: string;
-  number: string;
-  complement: string;
-  neighborhood: string;
-  city: string;
-  state: string;
-  farmName: string;
-  totalArea: string;
-  arableArea: string;
-  vegetationArea: string;
-  harvest: string;
-  crop: string;
 };
 
 export const emptyProducerFormData: ProducerFormData = {
   document: '',
-  name: '',
-  email: '',
-  phone: '',
-  stateRegistration: '',
-  birthDate: '',
-  zipCode: '',
-  address: '',
-  number: '',
-  complement: '',
-  neighborhood: '',
-  city: '',
-  state: '',
-  farmName: '',
-  totalArea: '',
-  arableArea: '',
-  vegetationArea: '',
-  harvest: '',
-  crop: ''
+  name: ''
 };

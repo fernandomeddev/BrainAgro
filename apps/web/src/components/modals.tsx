@@ -8,6 +8,7 @@ import { maskDocument } from '../utils/formatters';
 export function ProducerModal(props: {
   data: ProducerFormData;
   error: string | null;
+  duplicateProducerName: string | null;
   isSubmitting: boolean;
   onClose: () => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
@@ -26,19 +27,39 @@ export function ProducerModal(props: {
           </IconButton>
         </ModalHeader>
         {props.error ? <Alert role="alert">{props.error}</Alert> : null}
+        {props.duplicateProducerName ? (
+          <Alert role="alert">Este documento ja esta cadastrado para {props.duplicateProducerName}.</Alert>
+        ) : null}
         <FormGrid>
           <Field label="CPF ou CNPJ" required>
-            <Input value={props.data.document} onChange={(event) => props.onChange('document', maskDocument(event.target.value))} placeholder="000.000.000-00" />
+            <Input
+              name="document"
+              value={props.data.document}
+              onChange={(event) => props.onChange('document', maskDocument(event.target.value))}
+              placeholder="000.000.000-00"
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={18}
+              required
+            />
           </Field>
           <Field label="Nome do produtor" required>
-            <Input value={props.data.name} onChange={(event) => props.onChange('name', event.target.value)} placeholder="Nome completo" />
+            <Input
+              name="name"
+              value={props.data.name}
+              onChange={(event) => props.onChange('name', event.target.value)}
+              placeholder="Nome completo"
+              autoComplete="name"
+              minLength={2}
+              required
+            />
           </Field>
         </FormGrid>
         <ModalActions>
           <SecondaryButton type="button" onClick={props.onClose}>
             Cancelar
           </SecondaryButton>
-          <PrimaryButton disabled={props.isSubmitting}>
+          <PrimaryButton disabled={props.isSubmitting || Boolean(props.duplicateProducerName)}>
             {props.isSubmitting ? <Loader2 size={16} /> : <Check size={16} />}
             Salvar
           </PrimaryButton>
@@ -143,22 +164,22 @@ export function FarmModal(props: {
           </Select>
         </Field>
         <Field label="Nome da fazenda" required>
-          <Input name="farmName" required />
+          <Input name="farmName" minLength={2} required />
         </Field>
         <Field label="Cidade" required>
-          <Input name="city" required />
+          <Input name="city" minLength={2} required />
         </Field>
         <Field label="UF" required>
-          <Input name="state" maxLength={2} required />
+          <Input name="state" minLength={2} maxLength={2} autoCapitalize="characters" required />
         </Field>
         <Field label="Area total" required>
-          <Input name="totalArea" type="number" step="0.01" required />
+          <Input name="totalArea" type="number" step="0.01" min="0.01" required />
         </Field>
         <Field label="Area agricultavel" required>
-          <Input name="arableArea" type="number" step="0.01" required />
+          <Input name="arableArea" type="number" step="0.01" min="0" required />
         </Field>
         <Field label="Area vegetacao" required>
-          <Input name="vegetationArea" type="number" step="0.01" required />
+          <Input name="vegetationArea" type="number" step="0.01" min="0" required />
         </Field>
         <Field label="Safra">
           <Input name="harvest" />
@@ -203,10 +224,10 @@ export function CultureModal(props: {
           </Select>
         </Field>
         <Field label="Safra" required>
-          <Input name="harvest" placeholder="Safra 2026" required />
+          <Input name="harvest" placeholder="Safra 2026" minLength={2} required />
         </Field>
         <Field label="Cultura" required>
-          <Input name="crop" placeholder="Soja, milho..." required />
+          <Input name="crop" placeholder="Soja, milho..." minLength={2} required />
         </Field>
       </FormGrid>
       <ModalActions>

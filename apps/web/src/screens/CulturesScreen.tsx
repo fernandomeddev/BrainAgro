@@ -1,5 +1,4 @@
 import { Check, Edit3, Sprout, Trash2, X } from 'lucide-react';
-import styled from 'styled-components';
 import type { CultureWithContext, HarvestCropDraft } from '../app-types';
 import { Actions, DataTable, EmptyState, IconButton, InlineInput, PageContainer, Panel, PanelHeader } from '../components/ui';
 
@@ -21,11 +20,6 @@ export function CulturesScreen(props: {
             <span>{props.cultures.length} culturas por safra</span>
           </div>
         </PanelHeader>
-        <FilterStrip>
-          <StatusBadge>Safra</StatusBadge>
-          <StatusBadge>Produtor</StatusBadge>
-          <StatusBadge>Cultura</StatusBadge>
-        </FilterStrip>
         <DataTable>
           <thead>
             <tr>
@@ -94,18 +88,3 @@ export function CulturesScreen(props: {
     </PageContainer>
   );
 }
-
-const FilterStrip = styled.div`
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-`;
-
-const StatusBadge = styled.span`
-  border: 1px solid rgba(34, 197, 94, 0.18);
-  border-radius: 999px;
-  padding: 7px 10px;
-  color: #86efac;
-  background: rgba(34, 197, 94, 0.09);
-  font-size: 0.8rem;
-`;

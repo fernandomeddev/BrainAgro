@@ -3,7 +3,7 @@ import type { ActiveModal, DashboardFilters, FarmDraft, HarvestCropDraft, Page, 
 import { emptyProducerFormData } from './app-types';
 import { AppHeader, AppSidebar, Main, Shell } from './components/AppLayout';
 import { CultureModal, DashboardFilterModal, FarmModal, ProducerCreatedModal, ProducerModal } from './components/modals';
-import { Alert, Toast } from './components/ui';
+import { Toast } from './components/ui';
 import { fetchDashboard } from './store/dashboardSlice';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import {
@@ -26,16 +26,16 @@ import { DashboardScreen } from './screens/DashboardScreen';
 import { FarmsScreen } from './screens/FarmsScreen';
 import { PlaceholderScreen } from './screens/PlaceholderScreen';
 import { ProducersScreen } from './screens/ProducersScreen';
-import { normalizeApiError, onlyDigits } from './utils/formatters';
+import { isValidDocument, normalizeApiError, onlyDigits } from './utils/formatters';
 
 const PAGE_SIZE = 5;
+type ToastMessage = { type: 'success' | 'error'; message: string };
 
 export function App() {
   const dispatch = useAppDispatch();
   const dashboardStatus = useAppSelector((state) => state.dashboard.status);
   const producers = useAppSelector((state) => state.producers.items);
   const producersStatus = useAppSelector((state) => state.producers.status);
-  const producersError = useAppSelector((state) => state.producers.error);
 
   const [activePage, setActivePage] = useState<Page>('producers');
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
@@ -46,7 +46,7 @@ export function App() {
   const [pageIndex, setPageIndex] = useState(1);
   const [producerForm, setProducerForm] = useState<ProducerFormData>(emptyProducerFormData);
   const [formError, setFormError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
   const [isSubmitting, setSubmitting] = useState(false);
   const [isFarmSubmitting, setFarmSubmitting] = useState(false);
   const [isCultureSubmitting, setCultureSubmitting] = useState(false);
@@ -116,6 +116,11 @@ export function App() {
     () => producers.find((producer) => producer.id === selectedProducerId) ?? null,
     [producers, selectedProducerId]
   );
+  const producerDocumentConflict = useMemo(() => {
+    const normalizedDocument = onlyDigits(producerForm.document);
+    if (![11, 14].includes(normalizedDocument.length)) return null;
+    return producers.find((producer) => producer.document === normalizedDocument) ?? null;
+  }, [producerForm.document, producers]);
   const totalPages = Math.max(1, Math.ceil(producers.length / PAGE_SIZE));
   const paginatedProducers = producers.slice((pageIndex - 1) * PAGE_SIZE, pageIndex * PAGE_SIZE);
   const dashboardStateOptions = useMemo(() => Array.from(new Set(farms.map((farm) => farm.state))).sort(), [farms]);
@@ -170,22 +175,61 @@ export function App() {
     setActiveModal('producer');
   }
 
+  function showSuccess(message: string) {
+    setToast({ type: 'success', message });
+  }
+
+  function showError(error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    setToast({ type: 'error', message: normalizeApiError(message) });
+  }
+
+  function showValidationError(message: string) {
+    setToast({ type: 'error', message });
+  }
+
+  function isValidFarmData(farm: Omit<CreateFarmPayload['farm'], 'harvestCrops'>) {
+    return (
+      farm.name.length >= 2 &&
+      farm.city.length >= 2 &&
+      farm.state.length === 2 &&
+      farm.totalArea > 0 &&
+      farm.arableArea >= 0 &&
+      farm.vegetationArea >= 0 &&
+      farm.arableArea + farm.vegetationArea <= farm.totalArea
+    );
+  }
+
   async function submitProducer(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (onlyDigits(producerForm.document).length < 11 || producerForm.name.trim().length < 3) {
-      setFormError('Informe um CPF/CNPJ e um nome valido para salvar.');
+    const normalizedDocument = onlyDigits(producerForm.document);
+    const producerName = producerForm.name.trim();
+
+    if (!isValidDocument(normalizedDocument) || producerName.length < 3) {
+      setFormError(null);
+      setToast({ type: 'error', message: 'Informe um CPF ou CNPJ valido e um nome com pelo menos 3 caracteres.' });
+      return;
+    }
+
+    const producerWithSameDocument = producers.find((producer) => producer.document === normalizedDocument);
+    if (producerWithSameDocument) {
+      setFormError(null);
+      setToast({
+        type: 'error',
+        message: `Este documento ja esta cadastrado para ${producerWithSameDocument.name}.`
+      });
       return;
     }
 
     setSubmitting(true);
     try {
-      const producer = await dispatch(
-        createProducer({ document: onlyDigits(producerForm.document), name: producerForm.name.trim() })
-      ).unwrap();
+      const producer = await dispatch(createProducer({ document: normalizedDocument, name: producerName })).unwrap();
       await Promise.all([dispatch(fetchDashboard()), dispatch(fetchProducers(debouncedSearch))]);
       setSelectedProducerId(producer.id);
       setActiveModal('producerCreated');
-      setToast('Produtor cadastrado com sucesso.');
+      showSuccess('Produtor cadastrado com sucesso.');
+    } catch (error) {
+      showError(error);
     } finally {
       setSubmitting(false);
     }
@@ -193,27 +237,46 @@ export function App() {
 
   async function submitFarm(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setFarmSubmitting(true);
     const form = new FormData(event.currentTarget);
+    const harvest = String(form.get('harvest') ?? '').trim();
+    const crop = String(form.get('crop') ?? '').trim();
     const payload: CreateFarmPayload = {
-      producerId: String(form.get('producerId')),
+      producerId: String(form.get('producerId') ?? ''),
       farm: {
-        name: String(form.get('farmName')),
-        city: String(form.get('city')),
-        state: String(form.get('state')).toUpperCase(),
+        name: String(form.get('farmName') ?? '').trim(),
+        city: String(form.get('city') ?? '').trim(),
+        state: String(form.get('state') ?? '').trim().toUpperCase(),
         totalArea: Number(form.get('totalArea')),
         arableArea: Number(form.get('arableArea')),
         vegetationArea: Number(form.get('vegetationArea')),
-        harvestCrops: [{ harvest: String(form.get('harvest')), crop: String(form.get('crop')) }].filter((item) => item.harvest && item.crop)
+        harvestCrops: harvest && crop ? [{ harvest, crop }] : undefined
       }
     };
 
+    if (!payload.producerId) {
+      showValidationError('Selecione um produtor para vincular a fazenda.');
+      return;
+    }
+
+    if (!isValidFarmData(payload.farm)) {
+      showValidationError('Revise os dados da fazenda. A area total deve ser maior que zero e agricultavel + vegetacao nao pode ultrapassar a area total.');
+      return;
+    }
+
+    if ((harvest && !crop) || (!harvest && crop)) {
+      showValidationError('Informe safra e cultura juntas ou deixe os dois campos vazios.');
+      return;
+    }
+
+    setFarmSubmitting(true);
     try {
       await dispatch(createFarm(payload)).unwrap();
       await Promise.all([dispatch(fetchDashboard()), dispatch(fetchProducers(debouncedSearch))]);
       setSelectedProducerId(payload.producerId);
       setActiveModal(null);
-      setToast('Fazenda vinculada com sucesso.');
+      showSuccess('Fazenda vinculada com sucesso.');
+    } catch (error) {
+      showError(error);
     } finally {
       setFarmSubmitting(false);
     }
@@ -221,19 +284,37 @@ export function App() {
 
   async function submitCulture(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setCultureSubmitting(true);
     const form = new FormData(event.currentTarget);
     const payload: CreateHarvestCropPayload = {
-      farmId: String(form.get('farmId')),
-      harvest: String(form.get('harvest')),
-      crop: String(form.get('crop'))
+      farmId: String(form.get('farmId') ?? ''),
+      harvest: String(form.get('harvest') ?? '').trim(),
+      crop: String(form.get('crop') ?? '').trim()
     };
 
+    if (!payload.farmId || payload.harvest.length < 2 || payload.crop.length < 2) {
+      showValidationError('Selecione uma fazenda e informe safra e cultura com pelo menos 2 caracteres.');
+      return;
+    }
+
+    const alreadyExists = cultures.some(
+      (culture) =>
+        culture.farmId === payload.farmId &&
+        culture.harvest.trim().toLowerCase() === payload.harvest.toLowerCase() &&
+        culture.crop.trim().toLowerCase() === payload.crop.toLowerCase()
+    );
+    if (alreadyExists) {
+      showValidationError('Esta cultura ja esta registrada para a fazenda e safra selecionadas.');
+      return;
+    }
+
+    setCultureSubmitting(true);
     try {
       await dispatch(createHarvestCrop(payload)).unwrap();
       await Promise.all([dispatch(fetchDashboard()), dispatch(fetchProducers(debouncedSearch))]);
       setActiveModal(null);
-      setToast('Cultura registrada com sucesso.');
+      showSuccess('Cultura registrada com sucesso.');
+    } catch (error) {
+      showError(error);
     } finally {
       setCultureSubmitting(false);
     }
@@ -245,7 +326,9 @@ export function App() {
     try {
       await dispatch(updateProducer(producerDraft)).unwrap();
       setProducerDraft(null);
-      setToast('Produtor atualizado.');
+      showSuccess('Produtor atualizado.');
+    } catch (error) {
+      showError(error);
     } finally {
       setSavingProducerId(null);
     }
@@ -253,12 +336,26 @@ export function App() {
 
   async function saveFarmDraft() {
     if (!farmDraft) return;
+    const normalizedDraft: FarmDraft = {
+      ...farmDraft,
+      name: farmDraft.name.trim(),
+      city: farmDraft.city.trim(),
+      state: farmDraft.state.trim().toUpperCase()
+    };
+
+    if (!isValidFarmData(normalizedDraft)) {
+      showValidationError('Revise os dados da fazenda. A area total deve ser maior que zero e agricultavel + vegetacao nao pode ultrapassar a area total.');
+      return;
+    }
+
     setSavingFarmId(farmDraft.id);
     try {
-      await dispatch(updateFarm(farmDraft)).unwrap();
+      await dispatch(updateFarm(normalizedDraft)).unwrap();
       await dispatch(fetchDashboard());
       setFarmDraft(null);
-      setToast('Fazenda atualizada.');
+      showSuccess('Fazenda atualizada.');
+    } catch (error) {
+      showError(error);
     } finally {
       setSavingFarmId(null);
     }
@@ -266,12 +363,41 @@ export function App() {
 
   async function saveCultureDraft() {
     if (!cultureDraft) return;
+    const normalizedDraft: HarvestCropDraft = {
+      ...cultureDraft,
+      harvest: cultureDraft.harvest.trim(),
+      crop: cultureDraft.crop.trim()
+    };
+
+    if (normalizedDraft.harvest.length < 2 || normalizedDraft.crop.length < 2) {
+      showValidationError('Informe safra e cultura com pelo menos 2 caracteres.');
+      return;
+    }
+
+    const originalCulture = cultures.find((culture) => culture.id === normalizedDraft.id);
+    const alreadyExists = Boolean(
+      originalCulture &&
+        cultures.some(
+          (culture) =>
+            culture.id !== normalizedDraft.id &&
+            culture.farmId === originalCulture.farmId &&
+            culture.harvest.trim().toLowerCase() === normalizedDraft.harvest.toLowerCase() &&
+            culture.crop.trim().toLowerCase() === normalizedDraft.crop.toLowerCase()
+        )
+    );
+    if (alreadyExists) {
+      showValidationError('Esta cultura ja esta registrada para a mesma fazenda e safra.');
+      return;
+    }
+
     setSavingCultureId(cultureDraft.id);
     try {
-      await dispatch(updateHarvestCrop(cultureDraft)).unwrap();
+      await dispatch(updateHarvestCrop(normalizedDraft)).unwrap();
       await dispatch(fetchDashboard());
       setCultureDraft(null);
-      setToast('Cultura atualizada.');
+      showSuccess('Cultura atualizada.');
+    } catch (error) {
+      showError(error);
     } finally {
       setSavingCultureId(null);
     }
@@ -283,7 +409,9 @@ export function App() {
     try {
       await dispatch(deleteProducer(producerId)).unwrap();
       await Promise.all([dispatch(fetchDashboard()), dispatch(fetchProducers(debouncedSearch))]);
-      setToast('Produtor excluido.');
+      showSuccess('Produtor excluido.');
+    } catch (error) {
+      showError(error);
     } finally {
       setDeletingProducerId(null);
     }
@@ -295,7 +423,9 @@ export function App() {
     try {
       await dispatch(deleteFarm(farmId)).unwrap();
       await Promise.all([dispatch(fetchDashboard()), dispatch(fetchProducers(debouncedSearch))]);
-      setToast('Fazenda excluida.');
+      showSuccess('Fazenda excluida.');
+    } catch (error) {
+      showError(error);
     } finally {
       setDeletingFarmId(null);
     }
@@ -307,7 +437,9 @@ export function App() {
     try {
       await dispatch(deleteHarvestCrop(cultureId)).unwrap();
       await Promise.all([dispatch(fetchDashboard()), dispatch(fetchProducers(debouncedSearch))]);
-      setToast('Cultura excluida.');
+      showSuccess('Cultura excluida.');
+    } catch (error) {
+      showError(error);
     } finally {
       setDeletingCultureId(null);
     }
@@ -330,8 +462,11 @@ export function App() {
           onAddCulture={() => setActiveModal('culture')}
         />
 
-        {toast ? <Toast role="status">{toast}</Toast> : null}
-        {producersError ? <Alert role="alert">{normalizeApiError(producersError)}</Alert> : null}
+        {toast ? (
+          <Toast role={toast.type === 'error' ? 'alert' : 'status'} $type={toast.type}>
+            {toast.message}
+          </Toast>
+        ) : null}
 
         {activePage === 'dashboard' ? (
           <DashboardScreen view={dashboardView} filters={dashboardFilters} onOpenFilters={() => setActiveModal('dashboardFilters')} status={dashboardStatus} />
@@ -387,7 +522,15 @@ export function App() {
       </Main>
 
       {activeModal === 'producer' ? (
-        <ProducerModal data={producerForm} error={formError} isSubmitting={isSubmitting} onClose={() => setActiveModal(null)} onSubmit={submitProducer} onChange={updateProducerForm} />
+        <ProducerModal
+          data={producerForm}
+          error={formError}
+          duplicateProducerName={producerDocumentConflict?.name ?? null}
+          isSubmitting={isSubmitting}
+          onClose={() => setActiveModal(null)}
+          onSubmit={submitProducer}
+          onChange={updateProducerForm}
+        />
       ) : null}
       {activeModal === 'producerCreated' ? <ProducerCreatedModal onAddFarm={() => setActiveModal('farm')} onSkip={() => setActiveModal(null)} /> : null}
       {activeModal === 'farm' ? (
