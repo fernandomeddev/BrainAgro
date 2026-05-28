@@ -368,7 +368,6 @@ export function App() {
             onSetFarmDraft={setFarmDraft}
             onSaveFarm={saveFarmDraft}
             onDeleteFarm={removeFarm}
-            onAddFarm={() => setActiveModal('farm')}
           />
         ) : null}
 
@@ -381,7 +380,6 @@ export function App() {
             onSetCultureDraft={setCultureDraft}
             onSaveCulture={saveCultureDraft}
             onDeleteCulture={removeCulture}
-            onAddCulture={() => setActiveModal('culture')}
           />
         ) : null}
 
