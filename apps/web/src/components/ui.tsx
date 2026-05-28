@@ -196,19 +196,6 @@ export const Alert = styled.div`
   background: rgba(127, 29, 29, 0.24);
 `;
 
-export const Toast = styled.div`
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 30;
-  border: 1px solid rgba(34, 197, 94, 0.25);
-  border-radius: 16px;
-  padding: 13px 16px;
-  color: #dcfce7;
-  background: rgba(16, 26, 22, 0.94);
-  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.3);
-`;
-
 export const Kicker = styled.span`
   color: #22c55e;
   font-size: 0.76rem;

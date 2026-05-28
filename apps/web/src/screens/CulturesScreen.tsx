@@ -1,17 +1,16 @@
-import { Edit3, Plus, Sprout, Trash2 } from 'lucide-react';
+import { Edit3, Sprout, Trash2 } from 'lucide-react';
 import styled from 'styled-components';
 import type { CultureWithContext, HarvestCropDraft } from '../app-types';
-import { Actions, DataTable, EmptyState, IconButton, PageContainer, Panel, PanelHeader, PrimaryButton } from '../components/ui';
+import { Actions, DataTable, EmptyState, IconButton, PageContainer, Panel, PanelHeader } from '../components/ui';
 
 export function CulturesScreen(props: {
   cultures: CultureWithContext[];
   cultureDraft: HarvestCropDraft | null;
   savingCultureId: string | null;
   deletingCultureId: string | null;
-  onSetCultureDraft: (draft: HarvestCropDraft | null) => void;
+  onSetCultureDraft: (draft: HarvestCropDraft) => void;
   onSaveCulture: () => void;
   onDeleteCulture: (id: string) => void;
-  onAddCulture: () => void;
 }) {
   return (
     <PageContainer>
@@ -21,10 +20,6 @@ export function CulturesScreen(props: {
             <h2>Culturas cadastradas</h2>
             <span>{props.cultures.length} culturas por safra</span>
           </div>
-          <PrimaryButton type="button" onClick={props.onAddCulture}>
-            <Plus size={16} />
-            Nova cultura
-          </PrimaryButton>
         </PanelHeader>
         <FilterStrip>
           <StatusBadge>Safra</StatusBadge>
