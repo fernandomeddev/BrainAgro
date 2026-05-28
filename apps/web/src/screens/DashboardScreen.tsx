@@ -82,7 +82,18 @@ function PiePanel({ title, subtitle, data, emptyText }: { title: string; subtitl
                     <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ background: '#101A16', border: '1px solid rgba(90,130,100,.2)', color: '#F8FAFC' }} />
+                <Tooltip
+                  contentStyle={{
+                    background: '#101A16',
+                    border: '1px solid rgba(34, 197, 94, 0.28)',
+                    borderRadius: 14,
+                    boxShadow: '0 18px 60px rgba(0, 0, 0, 0.42)',
+                    color: '#F8FAFC'
+                  }}
+                  itemStyle={{ color: '#F8FAFC', fontWeight: 700 }}
+                  labelStyle={{ color: '#86EFAC', fontWeight: 800 }}
+                  cursor={{ fill: 'rgba(34, 197, 94, 0.08)' }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </ChartSlot>

@@ -1,6 +1,6 @@
 {
   "name": "@brain-agriculture/web",
-  "version": "2.0.0",
+  "version": "2.0.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,6 +16,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-redux": "^9.1.2",
+    "react-toastify": "^11.1.0",
     "recharts": "^2.13.3",
     "styled-components": "^6.1.13"
   },
