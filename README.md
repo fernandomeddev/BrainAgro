@@ -1,48 +1,104 @@
 # Brain Agriculture
 
-Aplicacao fullstack para gerenciamento de produtores rurais, fazendas, safras, culturas plantadas e indicadores operacionais.
+Brain Agriculture e uma plataforma fullstack para gestao de produtores rurais, propriedades, safras, culturas plantadas e indicadores executivos de operacao agricola.
 
-## Escopo Entregue
+O projeto foi estruturado para demonstrar dominio tecnico ponta a ponta: modelagem de dominio, API REST com regras de negocio, persistencia relacional, frontend responsivo, dashboard operacional, contrato OpenAPI, testes automatizados e distribuicao com Docker.
 
-- CRUD de produtores rurais com validacao de CPF/CNPJ.
+## Visao Executiva
+
+A solucao atende um cenario real de agritech: manter uma base confiavel de produtores, controlar suas fazendas, registrar culturas por safra e consolidar dados para tomada de decisao.
+
+Principais capacidades:
+
+- Cadastro e manutencao de produtores rurais com CPF/CNPJ.
 - Cadastro e manutencao de fazendas vinculadas a produtores.
-- Cadastro e manutencao de culturas por fazenda e safra.
-- Validacao de area: `areaAgricultavel + areaVegetacao <= areaTotal`.
-- Dashboard com cards e graficos de pizza por uso do solo, estado e cultura.
-- Filtros funcionais no dashboard por UF e cultura.
-- Frontend dark SaaS, responsivo e refatorado em componentes.
-- Contrato OpenAPI versionado e validavel por script.
-- Docker para PostgreSQL, API e Web.
+- Registro de culturas por fazenda e safra.
+- Validacao de documento e regras de area agricola.
+- Dashboard com indicadores consolidados e graficos por estado, cultura e uso do solo.
+- Interface dark SaaS com navegacao por modais, feedbacks por toast e experiencia responsiva.
+- API documentada com Swagger e contrato OpenAPI versionado.
+- Banco PostgreSQL com Prisma ORM e migrations.
+- Execucao local com ou sem Docker.
+- Testes automatizados para regras criticas e fluxos de estado.
 
-## Documentacao
-
-- [Especificacao funcional e tecnica](docs/SPEC.md)
-- [Contrato OpenAPI](docs/openapi.yaml)
-- [Roteiro de decisoes tecnicas](docs/DECISIONS.md)
-- [Diagnostico e pontos de revisao](docs/DIAGNOSTICO.md)
-
-## Stack
+## Stack Tecnica
 
 Backend:
 
-- Node.js
+- Node.js 20
 - NestJS
 - TypeScript
-- Prisma
+- Prisma ORM
 - PostgreSQL
-- Docker
+- Swagger / OpenAPI
+- Jest
 
 Frontend:
 
 - React
 - TypeScript
+- Vite
 - Redux Toolkit
 - Styled Components
 - Recharts
+- React Toastify
 - Lucide Icons
-- Vite
+- Vitest
 
-## Como Executar Localmente
+Infraestrutura:
+
+- Docker
+- Docker Compose
+- Workspaces npm
+- Scripts de build, teste, versionamento e validacao OpenAPI
+
+## Arquitetura
+
+```text
+apps/
+  api/                  API NestJS
+    prisma/             Schema, migrations e seed
+    src/                Controllers, services, dominio e infraestrutura
+  web/                  Aplicacao React
+    src/components/     Layout, modais e componentes reutilizaveis
+    src/screens/        Telas de dashboard, produtores, fazendas e culturas
+    src/store/          Estado global com Redux Toolkit
+    src/utils/          Formatadores e normalizacao
+docs/
+  SPEC.md               Especificacao funcional e tecnica
+  openapi.yaml          Contrato OpenAPI versionado
+scripts/
+  bump-version.cjs      Versionamento SemVer
+  validate-openapi.cjs  Validacao do contrato OpenAPI
+```
+
+## Requisitos
+
+- Node.js `>= 20`
+- npm
+- Docker e Docker Compose, caso opte por executar com containers
+
+## Variaveis de Ambiente
+
+Crie o arquivo `.env` a partir do exemplo:
+
+```bash
+cp .env.example .env
+```
+
+Conteudo esperado para execucao local padrao:
+
+```env
+DATABASE_URL="postgresql://brain:brain@localhost:5432/brain_agriculture?schema=public"
+API_PORT=3333
+WEB_API_URL="http://localhost:3333"
+```
+
+Observacao: o frontend usa `VITE_API_URL` quando informado. Sem configuracao adicional, ele assume `http://localhost:3333`, que e o endpoint padrao da API local.
+
+## Execucao Local com Docker
+
+Use este caminho para uma demonstracao rapida da aplicacao completa.
 
 1. Instale as dependencias:
 
@@ -50,67 +106,95 @@ Frontend:
 npm install
 ```
 
-2. Copie as variaveis de ambiente:
-
-```bash
-cp .env.example .env
-```
-
-3. Suba somente o PostgreSQL:
-
-```bash
-npm run docker:db
-```
-
-4. Gere o client Prisma e rode as migrations:
-
-```bash
-npm run prisma:generate
-npm run prisma:migrate
-```
-
-5. Popule dados de exemplo:
-
-```bash
-npm run seed
-```
-
-6. Rode API e Web em terminais separados:
-
-```bash
-npm run dev --workspace @brain-agriculture/api
-npm run dev --workspace @brain-agriculture/web
-```
-
-URLs locais:
-
-- API: `http://localhost:3333`
-- Swagger UI: `http://localhost:3333/docs`
-- Swagger JSON: `http://localhost:3333/docs-json`
-- Web: `http://localhost:5173`
-
-Se a porta `3333` estiver em uso apos executar a pilha Docker completa, pare os containers de aplicacao e mantenha somente o banco:
-
-```bash
-npm run docker:stop-app
-npm run docker:db
-```
-
-## Docker
-
-Para executar a pilha completa em containers:
+2. Suba API, Web e PostgreSQL:
 
 ```bash
 npm run docker:app
 ```
 
-URLs em Docker:
+3. Acesse:
 
+- Web: `http://localhost:4173`
 - API: `http://localhost:3333`
 - Swagger UI: `http://localhost:3333/docs`
-- Web: `http://localhost:4173`
+- Swagger JSON: `http://localhost:3333/docs-json`
 
-## Validacoes
+No modo Docker, a API executa as migrations automaticamente no startup usando `prisma migrate deploy`.
+
+Comandos uteis:
+
+```bash
+docker compose ps
+docker compose logs -f api
+docker compose logs -f web
+docker compose down
+```
+
+## Execucao Local sem Docker
+
+Use este caminho para desenvolvimento ativo, com hot reload na API e no frontend.
+
+1. Instale as dependencias:
+
+```bash
+npm install
+```
+
+2. Crie o `.env`:
+
+```bash
+cp .env.example .env
+```
+
+3. Suba somente o PostgreSQL via Docker:
+
+```bash
+npm run docker:db
+```
+
+4. Gere o Prisma Client:
+
+```bash
+npm run prisma:generate
+```
+
+5. Execute as migrations:
+
+```bash
+npm run prisma:migrate
+```
+
+6. Carregue dados de exemplo:
+
+```bash
+npm run seed
+```
+
+7. Inicie a API:
+
+```bash
+npm run dev --workspace @brain-agriculture/api
+```
+
+8. Em outro terminal, inicie o frontend:
+
+```bash
+npm run dev --workspace @brain-agriculture/web
+```
+
+URLs locais:
+
+- Web: `http://localhost:5173`
+- API: `http://localhost:3333`
+- Swagger UI: `http://localhost:3333/docs`
+
+## Scripts Principais
+
+Instalar dependencias:
+
+```bash
+npm install
+```
 
 Build completo:
 
@@ -118,34 +202,101 @@ Build completo:
 npm run build
 ```
 
-Testes:
+Testes automatizados:
 
 ```bash
 npm run test
 ```
 
-Validar contrato OpenAPI:
+Validar OpenAPI:
 
 ```bash
 npm run openapi:validate
 ```
 
-O script valida:
+Executar banco:
 
-- sintaxe YAML;
-- secoes principais (`openapi`, `paths`, `components`);
-- referencias internas `$ref`.
+```bash
+npm run docker:db
+```
 
-O contrato versionado fica em `docs/openapi.yaml`. A API tambem publica uma documentacao interativa gerada em runtime em `http://localhost:3333/docs`.
+Executar stack completa:
+
+```bash
+npm run docker:app
+```
+
+Parar apenas API e Web em Docker, mantendo PostgreSQL ativo:
+
+```bash
+npm run docker:stop-app
+```
+
+## API
+
+Endpoints principais:
+
+```text
+POST   /producers
+GET    /producers
+GET    /producers/:producerId
+PUT    /producers/:producerId
+DELETE /producers/:producerId
+
+POST   /producers/:producerId/farms
+GET    /producers/:producerId/farms
+GET    /farms/:farmId
+PUT    /farms/:farmId
+DELETE /farms/:farmId
+
+POST   /farms/:farmId/harvest-crops
+GET    /farms/:farmId/harvest-crops
+PUT    /harvest-crops/:harvestCropId
+DELETE /harvest-crops/:harvestCropId
+
+GET    /dashboard
+```
+
+Documentacao interativa:
+
+```text
+http://localhost:3333/docs
+```
+
+Contrato versionado:
+
+```text
+docs/openapi.yaml
+```
+
+## Regras de Negocio
+
+- CPF e CNPJ sao normalizados e validados por digito verificador.
+- Documento de produtor e unico.
+- Um produtor pode possuir multiplas fazendas.
+- A soma `areaAgricultavel + areaVegetacao` nao pode ultrapassar `areaTotal`.
+- Uma fazenda pode ter varias culturas por safra.
+- A mesma cultura nao pode ser duplicada na mesma fazenda e safra.
+- Exclusao de produtor e fazenda segue estrategia de soft delete para preservar historico operacional.
 
 ## Frontend
+
+A interface foi desenhada com foco em produtividade operacional:
+
+- Dashboard executivo com cards e graficos.
+- Lista de produtores com expansao para fazendas e culturas.
+- Formularios em modais para reduzir troca de contexto.
+- Edicao de fazendas e culturas em modais preenchidos.
+- Confirmacoes de exclusao com modal personalizado.
+- Feedbacks de sucesso e erro com React Toastify.
+- Layout dark SaaS responsivo.
 
 Estrutura principal:
 
 ```text
 apps/web/src
-  app-types.ts
   App.tsx
+  app-types.ts
   components/
     AppLayout.tsx
     modals.tsx
@@ -155,42 +306,34 @@ apps/web/src
     ProducersScreen.tsx
     FarmsScreen.tsx
     CulturesScreen.tsx
-    PlaceholderScreen.tsx
   store/
   styles/
   utils/
 ```
 
-Decisao arquitetural: `App.tsx` fica responsavel por orquestrar estado, dispatches e exibicao das telas. Componentes visuais e telas ficam separados para facilitar manutencao.
+## Qualidade e Validacao
 
-## OpenAPI
+O projeto inclui uma esteira local simples para avaliar integridade tecnica:
 
-Arquivo principal:
-
-```text
-docs/openapi.yaml
+```bash
+npm run build
+npm run test
+npm run openapi:validate
 ```
 
-Resumo atual:
+Esses comandos validam:
 
-- OpenAPI: `3.0.3`
-- API version: `1.0.0`
-- Paths documentados: produtores, fazendas, culturas e dashboard.
-- Renderizacao interativa: `http://localhost:3333/docs`.
-- JSON gerado em runtime: `http://localhost:3333/docs-json`.
+- compilacao TypeScript da API e do Web;
+- build de producao do frontend;
+- testes unitarios e de estado;
+- contrato OpenAPI versionado;
+- referencias internas do arquivo OpenAPI.
 
 ## Versionamento
 
-O projeto usa SemVer no formato `MAJOR.MINOR.PATCH`, mantendo a mesma versao no pacote raiz, API, frontend e `package-lock.json`.
+O repositorio usa SemVer no formato `MAJOR.MINOR.PATCH`, mantendo versao sincronizada entre pacote raiz, API, Web e lockfile.
 
-Regras:
-
-- `dev`: incrementa prerelease de desenvolvimento.
-- `fix`: incrementa patch.
-- `feature`: incrementa minor.
-- `release`: incrementa major.
-
-Comandos:
+Comandos disponiveis:
 
 ```bash
 npm run version:dev
@@ -199,14 +342,19 @@ npm run version:feature
 npm run version:release
 ```
 
-Simular sem alterar arquivos:
+Simulacao sem escrita:
 
 ```bash
 npm run version -- dev --dry-run
 ```
 
-## Pontos Conhecidos
+## Material de Apoio
 
-- `npm run lint` ainda depende de criar `eslint.config.js` para ESLint 9.
-- Dashboard filtra em memoria no frontend; para grande volume, recomenda-se filtros no endpoint `/dashboard`.
-- Relatorios e Configuracoes estao preparados na navegacao, mas sem regra de negocio implementada.
+- [Especificacao funcional e tecnica](docs/SPEC.md)
+- [Contrato OpenAPI](docs/openapi.yaml)
+
+## Proposta Tecnica
+
+Brain Agriculture representa uma entrega fullstack com leitura de produto, criterio arquitetural e cuidado de experiencia. A solucao combina backend consistente, frontend orientado a fluxo de trabalho, validacoes de dominio, documentacao executavel e empacotamento com Docker.
+
+O projeto foi conduzido com foco em clareza, manutencao e demonstrabilidade: possibilitando facilmente subir o ambiente, validar a API, navegar pelo frontend e verificar os principais criterios de negocio em poucos minutos.
